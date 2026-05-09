@@ -3,7 +3,6 @@ import { supabase } from '../../lib/supabase';
 import type { Visit } from '../../lib/supabase';
 import { 
   FileDown, 
-  FileText, 
   BarChart3, 
   Calendar as CalendarIcon, 
   User, 

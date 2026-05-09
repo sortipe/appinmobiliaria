@@ -23,7 +23,6 @@ const Properties: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({

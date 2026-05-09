@@ -10,8 +10,6 @@ import {
   History,
   Calendar
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 interface UploadingFile {
   id: string;

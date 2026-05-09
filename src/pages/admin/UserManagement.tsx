@@ -10,7 +10,6 @@ import {
   Mail, 
   Trash2, 
   Edit2, 
-  Check, 
   X,
   ShieldCheck,
   User as UserIcon,
@@ -21,7 +20,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 const UserManagement: React.FC = () => {
   const { profile: currentUser } = useAuth();
   const [users, setUsers] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -38,7 +36,6 @@ const UserManagement: React.FC = () => {
   const fetchUsers = async () => {
     if (!currentUser?.company_id) return;
     
-    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -58,8 +55,6 @@ const UserManagement: React.FC = () => {
           { id: '3', full_name: 'Roberto Smith', email: 'roberto@demo.com', role: 'asesor', company_id: currentUser.company_id },
         ]);
       }
-    } finally {
-      setLoading(false);
     }
   };
 
