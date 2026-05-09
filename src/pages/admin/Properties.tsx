@@ -6,7 +6,6 @@ import {
   Plus, 
   Search, 
   Filter, 
-  MoreVertical, 
   MapPin, 
   Tag, 
   Image as ImageIcon,
@@ -23,6 +22,7 @@ const Properties: React.FC = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -136,13 +136,16 @@ const Properties: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!confirm('¿Estás seguro de eliminar esta propiedad?')) return;
     
+    setIsDeleting(id);
     const previousProperties = [...properties];
     setProperties(properties.filter(p => p.id !== id));
     
     try {
       const { error } = await supabase.from('properties').delete().eq('id', id);
       if (error) throw error;
+      setIsDeleting(null);
     } catch (error) {
+      setIsDeleting(null);
       setProperties(previousProperties);
       alert('Error al eliminar. Se ha restaurado la propiedad.');
     }

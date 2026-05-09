@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { 
   Building2, 
-  Home, 
   Calendar, 
   Users, 
   FileText, 
@@ -13,7 +12,6 @@ import {
   X, 
   LayoutDashboard,
   ClipboardList,
-  ShieldCheck,
   Globe,
   Settings,
   Briefcase

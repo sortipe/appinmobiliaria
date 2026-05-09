@@ -98,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('demo_user', JSON.stringify(demoData));
   };
 
-  const hasPermission = (module: string, action: string) => {
+  const hasPermission = (_module: string, action: string) => {
     if (!profile) return false;
     if (profile.role === 'super_admin' || profile.role === 'gerente') return true;
     
