@@ -1,9 +1,38 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const envUrl = import.meta.env.VITE_SUPABASE_URL;
+const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+// Validate URL to prevent crash
+const isValidUrl = (url: string | undefined) => {
+  if (!url || url.includes('placeholder')) return false;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const isSupabaseConfigured = isValidUrl(envUrl) && !!envKey;
+
+const supabaseUrl = envUrl || 'https://placeholder.supabase.co';
+const supabaseAnonKey = envKey || 'placeholder-key';
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: 'appinmoviliaria-auth-session',
+  }
+});
+
+if (isSupabaseConfigured) {
+  console.info('Supabase CONNECTED successfully.');
+} else {
+  console.warn('Supabase credentials missing or invalid. Using placeholders.');
+}
 
 export type UserRole = 'super_admin' | 'gerente' | 'broker' | 'asesor' | 'cliente';
 
