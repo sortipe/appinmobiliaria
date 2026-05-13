@@ -10,6 +10,7 @@ import CalendarView from './components/CalendarView';
 import Binnacle from './pages/worker/Binnacle';
 import WorkerDashboard from './pages/worker/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
+import CompanyManagement from './pages/admin/CompanyManagement';
 
 // Placeholder Pages for New Roles
 const SuperAdminDashboard = () => (
@@ -75,6 +76,12 @@ function App() {
           <Route path="/admin/users" element={
             <ProtectedRoute allowedRoles={['super_admin', 'gerente']}>
               <Layout><UserManagement /></Layout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/company" element={
+            <ProtectedRoute allowedRoles={['super_admin', 'gerente']}>
+              <Layout><CompanyManagement /></Layout>
             </ProtectedRoute>
           } />
 
