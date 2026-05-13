@@ -5,7 +5,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { 
   UserPlus, 
   Search, 
-  MoreVertical, 
   Shield, 
   Mail, 
   Trash2, 

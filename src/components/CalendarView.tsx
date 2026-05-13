@@ -5,14 +5,14 @@ import { supabase } from '../lib/supabase';
 import type { Visit } from '../lib/supabase';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Clock, MapPin, User, ChevronRight, Plus, X, Calendar as CalendarIcon, Briefcase } from 'lucide-react';
+import { Clock, MapPin, User, ChevronRight, Plus, X, Calendar as CalendarIcon, Briefcase, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import type { Property, Profile } from '../lib/supabase';
 
 const CalendarView: React.FC = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [visits, setVisits] = useState<Visit[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
   const [workers, setWorkers] = useState<Profile[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -140,6 +140,7 @@ const CalendarView: React.FC = () => {
       });
       fetchVisits();
     } catch (error) {
+      const isDemo = localStorage.getItem('demo_user');
       if (isDemo) {
         // Handle Demo Persistance
         const scheduledAt = new Date(date);

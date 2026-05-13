@@ -1,10 +1,11 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { UserRole } from '../../lib/supabase';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ('admin' | 'worker')[];
+  allowedRoles?: UserRole[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
@@ -24,7 +25,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   }
 
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
-    return <Navigate to={profile.role === 'admin' ? '/admin' : '/worker'} replace />;
+    const isAnyAdmin = profile.role === 'super_admin' || profile.role === 'gerente';
+    return <Navigate to={isAnyAdmin ? '/admin' : '/'} replace />;
   }
 
   return <>{children}</>;

@@ -4,14 +4,13 @@ import {
   DollarSign, 
   RefreshCw, 
   Share2, 
-  Info, 
-  ArrowRight,
+  Info,
   TrendingUp,
   Landmark,
   Check,
   AlertCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const TaxCalculator: React.FC = () => {
   // Constants
