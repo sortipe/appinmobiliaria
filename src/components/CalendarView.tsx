@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import type { Visit } from '../lib/supabase';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Clock, MapPin, User, ChevronRight, Plus, X, Calendar as CalendarIcon, Briefcase, Loader2 } from 'lucide-react';
+import { Clock, MapPin, User, ChevronRight, Plus, X, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import type { Property, Profile } from '../lib/supabase';
 
