@@ -439,19 +439,17 @@ const Properties: React.FC = () => {
     // Capitalize first letter
     text = text.charAt(0).toUpperCase() + text.slice(1);
     
-    // Auto-replace common spanish spoken numbers with digits
+    // Auto-replace common spanish spoken numbers with digits using strict word boundaries
     const numberMap: { [key: string]: string } = {
-      ' uno ': ' 1 ', ' dos ': ' 2 ', ' tres ': ' 3 ', ' cuatro ': ' 4 ', 
-      ' cinco ': ' 5 ', ' seis ': ' 6 ', ' siete ': ' 7 ', ' ocho ': ' 8 ', 
-      ' nueve ': ' 9 ', ' diez ': ' 10 ', ' un ': ' 1 ', ' una ': ' 1 ',
-      ' primer ': ' 1er ', ' segundo ': ' 2do ', ' tercer ': ' 3er ',
-      ' dormitorios ': ' habitaciones ', ' recámaras ': ' habitaciones ',
-      ' habitacion ': ' habitación ', ' habitaciones ': ' habitaciones '
+      'uno': '1', 'dos': '2', 'tres': '3', 'cuatro': '4', 
+      'cinco': '5', 'seis': '6', 'siete': '7', 'ocho': '8', 
+      'nueve': '9', 'diez': '10', 'un': '1', 'una': '1',
+      'primer': '1er', 'segundo': '2do', 'tercer': '3er'
     };
 
-    // Apply mappings
+    // Apply mappings using word boundary regex to avoid partial word replacements
     Object.keys(numberMap).forEach(key => {
-      const regex = new RegExp(key, 'gi');
+      const regex = new RegExp(`\\b${key}\\b`, 'gi');
       text = text.replace(regex, numberMap[key]);
     });
 
@@ -463,8 +461,14 @@ const Properties: React.FC = () => {
       'trescientos mil': '300000',
       'cuatrocientos mil': '400000',
       'quinientos mil': '500000',
+      'seiscientos mil': '600000',
+      'setecientos mil': '700000',
+      'ochocientos mil': '800000',
+      'novecientos mil': '900000',
       'un millón': '1000000',
       'un millon': '1000000',
+      'dos millones': '2000000',
+      'tres millones': '3000000',
     };
 
     Object.keys(priceWords).forEach(word => {
@@ -509,31 +513,33 @@ const Properties: React.FC = () => {
     // 1. Extract Price
     let price = '';
     
-    // a) Try explicit prefixes: e.g. $500, usd 500, s/. 500, s/ 500
-    const prefixRegex = /(?:[\$\€]|usd|s\/\.?)\s*(\d{1,3}(?:[.,]\d{3})*(?:\s*mil)?)\b/i;
-    const prefixMatch = text.match(prefixRegex);
-    if (prefixMatch) {
-      const val = parseNum(prefixMatch[1]);
+    // a) Try explicit currency prefix or suffix (handles $900000, 900000 dólares, usd 900000, s/. 900000)
+    // Matches raw digits or digits with separators, followed/preceded by currency names/symbols.
+    const currencyNumberRegex = /(?:(?:[\$\€]|usd|s\/\.?)\s*(\d+(?:[.,]\d{3})*(?:\s*mil)?)\b)|(?:\b(\d+(?:[.,]\d{3})*(?:\s*mil)?)\s*(?:dólares|dolares|usd|euros|soles|pesos|dls)\b)/i;
+    const currMatch = text.match(currencyNumberRegex);
+    if (currMatch) {
+      const valStr = currMatch[1] || currMatch[2];
+      const val = parseNum(valStr);
       if (!isNaN(val)) {
         price = val.toString();
       }
     }
     
-    // b) Try explicit suffixes if no prefix match: e.g. 500 dólares, 500 usd, 500 soles, 500 pesos, 500 euros
+    // b) Try explicit price phrases (e.g. "cuesta 900000", "el precio es de 900000", "valorizado en 900000")
     if (!price) {
-      const suffixRegex = /\b(\d{1,3}(?:[.,]\d{3})*(?:\s*mil)?)\s*(?:dólares|dolares|usd|euros|soles|pesos)\b/i;
-      const suffixMatch = text.match(suffixRegex);
-      if (suffixMatch) {
-        const val = parseNum(suffixMatch[1]);
+      const pricePhraseRegex = /(?:precio(?:\s+es)?(?:\s+de)?|cuesta|cuestan|está\s+en|esta\s+en|está|esta|valorizado\s+en|valorizada\s+en|monto\s+de|suma\s+de)\s*(?:(?:[\$\€]|usd|s\/\.?)\s*)?(\d+(?:[.,]\d{3})*(?:\s*mil)?)\b/i;
+      const phraseMatch = text.match(pricePhraseRegex);
+      if (phraseMatch) {
+        const val = parseNum(phraseMatch[1]);
         if (!isNaN(val)) {
           price = val.toString();
         }
       }
     }
     
-    // c) Fallback to generic numbers >= 1000
+    // c) Fallback to generic numbers >= 1000, avoiding areas (which are usually < 1000)
     if (!price) {
-      const genericRegex = /\b\d{1,3}(?:[.,]\d{3})*(?:\s*mil)?\b/gi;
+      const genericRegex = /\b\d+(?:[.,]\d{3})*(?:\s*mil)?\b/gi;
       const matches = text.match(genericRegex);
       if (matches) {
         for (const match of matches) {
@@ -580,34 +586,44 @@ const Properties: React.FC = () => {
 
     // 5. Area Total (m²)
     let area_total = '';
-    const areaTotalMatch1 = text.match(/(?:superficie|área total|area total|terreno|total)\s*(?:de\s*)?(\d+)/i);
-    const areaTotalMatch2 = text.match(/(\d+)\s*(?:m2|m²|metros|mt)\s*(?:de\s*)?(?:superficie|área total|area total|terreno|total)/i);
-    if (areaTotalMatch1) {
-      area_total = areaTotalMatch1[1];
-    } else if (areaTotalMatch2) {
-      area_total = areaTotalMatch2[1];
+    const areaTotalRegexes = [
+      /(\d+)\s*(?:m2|m²|m|metros|mt|mts)?\s*(?:de\s*)?(?:superficie|área total|area total|terreno|total)\b/i,
+      /(?:superficie|área total|area total|terreno|total)\s*(?:de\s*)?(\d+)\b/i,
+      /(\d+)\s*(?:m2|m²|m|metros|mt|mts)\s+totales\b/i
+    ];
+    for (const r of areaTotalRegexes) {
+      const match = text.match(r);
+      if (match) {
+        area_total = match[1];
+        break;
+      }
     }
 
     // 6. Area Built (m²)
     let area_built = '';
-    const areaBuiltMatch1 = text.match(/(?:construido|construcción|techado|área construida|area construida)\s*(?:de\s*)?(\d+)/i);
-    const areaBuiltMatch2 = text.match(/(\d+)\s*(?:m2|m²|metros|mt)\s*(?:de\s*)?(?:construido|construcción|techado|área construida|area construida)/i);
-    if (areaBuiltMatch1) {
-      area_built = areaBuiltMatch1[1];
-    } else if (areaBuiltMatch2) {
-      area_built = areaBuiltMatch2[1];
+    const areaBuiltRegexes = [
+      /(\d+)\s*(?:m2|m²|m|metros|mt|mts)?\s*(?:de\s*)?(?:construido|construidos|construcción|techado|área construida|area construida)\b/i,
+      /(?:construido|construcción|techado|área construida|area construida)\s*(?:de\s*)?(\d+)\b/i,
+      /(\d+)\s*(?:m2|m²|m|metros|mt|mts)\s+(?:construidos|techados)\b/i
+    ];
+    for (const r of areaBuiltRegexes) {
+      const match = text.match(r);
+      if (match) {
+        area_built = match[1];
+        break;
+      }
     }
 
     // 7. Bedrooms
     let bedrooms = '';
-    const bedroomsMatch = text.match(/(\d+)\s*(?:dormitorio|habitación|habitacion|habitaciones|recámara|recamara|recámaras|recamaras|cuarto|cuartos)\b/i);
+    const bedroomsMatch = text.match(/(\d+)\s*(?:dormitorio|habitación|habitacion|habitaciones|recámara|recamara|recámaras|recamaras|cuarto|cuartos)s?\b/i);
     if (bedroomsMatch) {
       bedrooms = bedroomsMatch[1];
     }
 
     // 8. Bathrooms
     let bathrooms = '';
-    const bathroomsMatch = text.match(/(\d+)\s*(?:baño|baños|sshh|ss.hh)\b/i);
+    const bathroomsMatch = text.match(/(\d+)\s*(?:baño|sshh|ss\.hh)s?\b/i);
     if (bathroomsMatch) {
       bathrooms = bathroomsMatch[1];
     }
@@ -1090,23 +1106,70 @@ const Properties: React.FC = () => {
                       return (
                         <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 space-y-3">
                           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Campos a auto-rellenar:</span>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                             <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow">
                               <span className="block text-[10px] font-bold text-slate-400 uppercase">Nombre del Inmueble</span>
                               <span className="text-xs font-semibold text-slate-800 truncate block mt-0.5" title={preview.name}>
-                                {preview.name}
+                                {preview.name || 'No detectado'}
                               </span>
                             </div>
                             <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow">
-                              <span className="block text-[10px] font-bold text-slate-400 uppercase">Precio (USD)</span>
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase">Precio ({preview.currency})</span>
                               <span className={`text-xs font-semibold block mt-0.5 ${preview.price ? 'text-brand-600 font-mono' : 'text-amber-600'}`}>
-                                {preview.price ? `$${parseFloat(preview.price).toLocaleString()} USD` : 'No detectado'}
+                                {preview.price ? `${preview.currency === 'USD' ? '$' : preview.currency === 'EUR' ? '€' : 'S/ '}${parseFloat(preview.price).toLocaleString()} ${preview.currency}` : 'No detectado'}
                               </span>
                             </div>
-                            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow">
+                            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow col-span-2 sm:col-span-1">
                               <span className="block text-[10px] font-bold text-slate-400 uppercase">Dirección</span>
                               <span className="text-xs font-semibold text-slate-800 truncate block mt-0.5" title={preview.address}>
-                                {preview.address}
+                                {preview.address || 'No detectado'}
+                              </span>
+                            </div>
+                            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase">Tipo</span>
+                              <span className="text-xs font-semibold text-slate-800 block mt-0.5">
+                                {preview.property_type || 'No detectado'}
+                              </span>
+                            </div>
+                            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase">Operación</span>
+                              <span className={`text-xs font-semibold block mt-0.5 ${preview.operation === 'Alquiler' ? 'text-blue-600 font-bold' : 'text-emerald-600 font-bold'}`}>
+                                {preview.operation || 'No detectado'}
+                              </span>
+                            </div>
+                            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase">Habitaciones</span>
+                              <span className="text-xs font-semibold text-slate-800 block mt-0.5">
+                                {preview.bedrooms ? `${preview.bedrooms} dorm.` : 'No detectado'}
+                              </span>
+                            </div>
+                            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase">Baños</span>
+                              <span className="text-xs font-semibold text-slate-800 block mt-0.5">
+                                {preview.bathrooms ? `${preview.bathrooms} baños` : 'No detectado'}
+                              </span>
+                            </div>
+                            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase">Área Total</span>
+                              <span className="text-xs font-semibold text-slate-800 block mt-0.5 font-mono">
+                                {preview.area_total ? `${preview.area_total} m²` : 'No detectado'}
+                              </span>
+                            </div>
+                            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase">Área Const.</span>
+                              <span className="text-xs font-semibold text-slate-800 block mt-0.5 font-mono">
+                                {preview.area_built ? `${preview.area_built} m²` : 'No detectado'}
+                              </span>
+                            </div>
+                            <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm transition-all duration-200 hover:shadow col-span-2 lg:col-span-1">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase">Semáforo</span>
+                              <span className={`text-[11px] font-bold block mt-0.5 flex items-center gap-1.5 ${
+                                preview.status_color === 'green' ? 'text-green-600' : preview.status_color === 'yellow' ? 'text-amber-500' : 'text-rose-500'
+                              }`}>
+                                <span className={`w-2 h-2 rounded-full ${
+                                  preview.status_color === 'green' ? 'bg-green-500' : preview.status_color === 'yellow' ? 'bg-amber-400' : 'bg-rose-500'
+                                }`} />
+                                {preview.status_color === 'green' ? 'Verde' : preview.status_color === 'yellow' ? 'Amarillo' : 'Rojo'}
                               </span>
                             </div>
                           </div>
@@ -1363,7 +1426,7 @@ const Properties: React.FC = () => {
                       <div>
                         <p className="text-sm font-bold text-emerald-950">¡Campos auto-rellenados con éxito!</p>
                         <p className="text-xs text-emerald-700 mt-0.5">
-                          La IA de Voz ha completado el Nombre, Precio, Dirección y Descripción a partir de tu dictado.
+                          La IA de Voz ha completado el Nombre, Precio, Dirección, Tipo de Inmueble, Operación, Habitaciones, Baños, Áreas y Descripción a partir de tu dictado.
                         </p>
                       </div>
                     </div>
