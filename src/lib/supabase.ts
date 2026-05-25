@@ -79,6 +79,19 @@ export type Property = {
   description: string;
   images: string[];
   created_at: string;
+  property_id?: string;
+  property_type?: string;
+  operation?: string;
+  status_color?: string;
+  status_reason?: string;
+  area_total?: number;
+  area_built?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  latitude?: number;
+  longitude?: number;
+  featured_image?: string;
+  documents?: string[];
 };
 
 export type Visit = {

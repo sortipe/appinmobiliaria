@@ -14,7 +14,8 @@ import {
   ClipboardList,
   Globe,
   Settings,
-  Briefcase
+  Briefcase,
+  Award
 } from 'lucide-react';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -49,6 +50,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       { name: 'Bitácora', path: '/worker/binnacle', icon: FileText },
       { name: 'Impuestos', path: '/calculator', icon: Calculator }
     );
+    if (role === 'broker') {
+      menuItems.push({ name: 'Exámenes', path: '/broker/exams', icon: Award });
+    } else if (role === 'asesor') {
+      menuItems.push({ name: 'Exámenes', path: '/worker/exams', icon: Award });
+    }
   }
 
   const handleSignOut = async () => {

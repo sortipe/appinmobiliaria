@@ -11,6 +11,8 @@ import Binnacle from './pages/worker/Binnacle';
 import WorkerDashboard from './pages/worker/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
 import CompanyManagement from './pages/admin/CompanyManagement';
+import ExamsDashboard from './pages/broker/ExamsDashboard';
+import ExamsList from './pages/worker/ExamsList';
 
 // Placeholder Pages for New Roles
 const SuperAdminDashboard = () => (
@@ -119,6 +121,18 @@ function App() {
           <Route path="/worker/binnacle" element={
             <ProtectedRoute allowedRoles={['broker', 'asesor']}>
               <Layout><Binnacle /></Layout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/broker/exams" element={
+            <ProtectedRoute allowedRoles={['broker']}>
+              <Layout><ExamsDashboard /></Layout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/worker/exams" element={
+            <ProtectedRoute allowedRoles={['asesor']}>
+              <Layout><ExamsList /></Layout>
             </ProtectedRoute>
           } />
 
